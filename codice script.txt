@@ -1,0 +1,63 @@
+library(lattice)
+library(memisc)
+library(car)
+library(effects)
+
+
+
+
+
+chile=chile[,-1]
+##grafico a pagina 5 migliorato######
+chi=chile
+chi$age[chile$age<=28]="<28"
+chi$age[chile$age>28 & chile$age<=38]="28-|38"
+chi$age[chile$age>38 & chile$age<=48]="38-|48"
+chi$age[chile$age>48]=">48"
+chiage=factor(chi$age)
+chiage=ordered(chiage, levels=c("<28","28-|38","38-|48",">48"))
+bwplot(chiage~statusquo|vote,data=chile,horizontal=1,xlab="Statusquo")
+bwplot(chiage~income|vote,data=chile,horizontal=1,xlab="Income")
+
+bwplot(income~statusquo|vote,data=chile,horizontal=1,xlab="Statusquo")
+###grafico a pagina 8####
+table(chile$vote,chile$education)
+table.eduvot=prop.table(table(chile$vote,chile$education))
+
+barplot(table.eduvot,beside=1)
+legend("top",legend=c("Astenuti","No","Indecisi","Si"),fill=terrain.colors(4),title="Vote")
+
+###secondo grafico pagina 8#####
+
+
+prvote=prop.table(table.eduvot,1)
+prvote
+
+###################################################################
+
+##REGRESSIONE LOGISTICA####
+
+s.chi=chile[chile$vote %in% c("Y","N"),]
+str(s.chi)
+
+s.chi$vote=factor(s.chi$vote,exclude=1)
+s.chi$vote=factor(s.chi$vote,exclude=3)
+table(s.chi$vote)
+num=as.numeric(s.chi$vote)
+str(num)
+num=recode(num,"c(1)='0';else='1'")
+
+table(num)       ###Y=1 N=0###
+
+s.chi$vote=num
+str(s.chi)
+
+####FITTING DEL MODELLO
+
+glm.statusquo=glm(formula=vote~statusquo,family=binomial(link=logit),data=s.chi)
+
+summary(glm.statusquo)
+exp(confint(glm.statusquo))
+
+ggplot(s.chi, aes(x=s.chi$vote,y=s.chi$statusquo,size=depth)) +
+  geom_point(alpha=0.2)
